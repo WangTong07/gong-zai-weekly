@@ -1,11 +1,14 @@
 <script setup>
 import { ref } from 'vue';
 
-// 定义响应式变量来存储用户输入、API Key、加载状态和结果
+// 定义响应式变量来存储用户输入、加载状态和结果
 const userInput = ref('');
-const apiKey = ref(''); // 用户将在此输入他们的API Key
 const loading = ref(false);
 const reportResult = ref('');
+
+// 【已修改】直接从Vercel的环境变量中读取API Key
+// 注意：这个变量名 VITE_ZHIPU_API_KEY 必须和你在Vercel上配置的完全一致
+const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
 
 // 定义生成周报的异步函数
 async function generateReport() {
@@ -13,10 +16,7 @@ async function generateReport() {
     alert('请输入你的工作内容！');
     return;
   }
-  if (!apiKey.value.trim()) {
-    alert('请输入你的智谱AI API Key！');
-    return;
-  }
+  // 【已移除】不再需要检查用户是否输入API Key
 
   loading.value = true;
   reportResult.value = '';
@@ -28,7 +28,8 @@ async function generateReport() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey.value}`
+        // 【已修改】直接使用apiKey变量，不再需要.value
+        "Authorization": `Bearer ${apiKey}` 
       },
       body: JSON.stringify({
         model: "glm-3-turbo",
@@ -37,7 +38,11 @@ async function generateReport() {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        const errorBody = await response.json();
+        console.error("API 错误响应:", errorBody);
+        // 显示更友好的错误提示
+        alert(`请求失败: ${errorBody.error?.message || response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
@@ -45,7 +50,9 @@ async function generateReport() {
 
   } catch (error) {
     console.error("请求AI API失败:", error);
-    alert('请求失败，请检查API Key或网络连接，并查看控制台获取详情。');
+    if (!alert.toString().includes('请求失败')) { // 避免重复弹窗
+        alert('生成报告时遇到问题，请稍后再试或查看控制台获取详情。');
+    }
   } finally {
     loading.value = false;
   }
@@ -60,10 +67,7 @@ async function generateReport() {
         把本周的琐事流水账丢进来，AI帮你生成一份体面的周报。
       </p>
 
-      <div class="api-key-input">
-        <label for="apiKey">智谱AI API Key:</label>
-        <input id="apiKey" type="password" v-model="apiKey" placeholder="在此输入你的API Key" />
-      </div>
+      <!-- 【已移除】API Key的输入框整个部分都删掉了 -->
 
       <textarea
         v-model="userInput"
@@ -114,24 +118,13 @@ h1 {
   color: #718096;
   font-size: 1.1rem;
 }
-.api-key-input {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-label {
-  font-weight: 500;
-  color: #4a5568;
-}
-input, textarea {
+textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
   font-size: 1rem;
   box-sizing: border-box;
-}
-textarea {
   resize: vertical;
 }
 button {
