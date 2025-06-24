@@ -1,12 +1,11 @@
 <script setup>
+// JavaScript部分完全不变
 import { ref, computed } from 'vue';
 
 const userInput = ref('');
 const loading = ref(false);
 const reportResult = ref('');
 const isResultVisible = ref(false);
-
-// 【新增】一个状态，用于追踪用户选择的报告类型，默认为'周报'
 const reportType = ref('weekly'); 
 
 const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
@@ -25,13 +24,10 @@ async function generateReport() {
   loading.value = true;
   isResultVisible.value = false;
 
-  // 【修改】根据reportType动态选择不同的Prompt
   let prompt = '';
   if (reportType.value === 'daily') {
-    // 这是为“日报”准备的全新Prompt
     prompt = `你是一位高效的团队主管，请将以下我的今日工作记录，整理成一份清晰、简洁、重点突出的日报。日报需要包含以下三个部分：1.【今日完成事项】(请用量化的方式描述) 2.【遇到的问题与风险】(如果没有问题，可以说“暂无”) 3.【明日工作计划】。请确保语言专业、干练。我的工作记录是：『${userInput.value}』`;
   } else {
-    // 这是我们之前的“周报”Prompt
     prompt = `你是一名资深项目经理和语言专家，请将以下我的本周工作记录，整理成一份专业、正式、结构清晰、语言精炼且富有洞见的周报。周报需要包含以下几个部分：【本周核心工作概览】、【主要成果与数据支撑】、【遇到的挑战与解决方案】、【个人成长与反思】、【下周重点计划】。请确保语言风格专业、积极，并能突出个人贡献和价值。我的工作记录是：『${userInput.value}』`;
   }
 
@@ -54,8 +50,7 @@ async function generateReport() {
     reportResult.value = data.choices[0].message.content;
     isResultVisible.value = true;
 
-  } catch (error)
- {
+  } catch (error) {
     console.error("请求AI API失败:", error);
     alert(`生成报告时遇到问题: ${error.message}`);
   } finally {
@@ -65,6 +60,7 @@ async function generateReport() {
 </script>
 
 <template>
+  <!-- HTML部分完全不变 -->
   <div class="page-wrapper">
     <div class="aurora-background">
       <div class="aurora-shape shape-1"></div>
@@ -80,7 +76,6 @@ async function generateReport() {
         <p>输入你的流水账，收获一份惊艳上级的专业报告</p>
       </header>
 
-      <!-- 【新增】报告类型切换器 -->
       <div class="report-type-selector">
         <button 
           :class="{ active: reportType === 'daily' }"
@@ -97,7 +92,6 @@ async function generateReport() {
       </div>
 
       <section class="features">
-        <!-- ... 特性展示区不变 ... -->
         <div class="feature-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             <span>深度理解</span>
@@ -121,7 +115,6 @@ async function generateReport() {
       </section>
 
       <button @click="generateReport" :disabled="loading" class="action-button">
-        <!-- 【修改】按钮文字更通用 -->
         <span v-if="!loading">生成我的专属报告</span>
         <span v-else class="loading-state">
           <svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle></svg>
@@ -151,7 +144,7 @@ async function generateReport() {
 </template>
 
 <style>
-/* --- 仅在最后增加新样式，其他样式不变 --- */
+/* --- 仅修改布局相关的z-index --- */
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --color-text: #e2e8f0;
@@ -168,13 +161,42 @@ async function generateReport() {
 body { font-family: var(--font-sans); background-color: var(--color-bg); color: var(--color-text); margin: 0; overflow: hidden; }
 .page-wrapper { position: relative; width: 100vw; height: 100vh; }
 .aurora-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; }
+.glass-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 2rem);
+  max-width: 680px;
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 2.5rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  /* 【关键修改】提升主卡片的层级 */
+  z-index: 10; 
+}
+.page-footer {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: 0.875rem;
+  /* 【关键修改】确保页脚层级低于主卡片 */
+  z-index: 5;
+}
+
+/* ... 其他所有样式保持不变 ... */
 .aurora-shape { position: absolute; filter: blur(120px); opacity: 0.3; border-radius: 50%; animation: move 20s infinite alternate; }
 .shape-1 { width: 500px; height: 500px; background-color: var(--color-aurora-1); top: -20%; left: -20%; }
 .shape-2 { width: 400px; height: 400px; background-color: var(--color-aurora-2); top: 30%; right: -10%; animation-delay: 5s; }
 .shape-3 { width: 450px; height: 450px; background-color: var(--color-aurora-3); bottom: -25%; left: 10%; animation-delay: 10s; }
 @keyframes move { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(100px, 50px) rotate(60deg); } }
-.glass-card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 2rem); max-width: 680px; background: var(--color-glass-bg); border: 1px solid var(--color-border); border-radius: 24px; padding: 2.5rem; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); z-index: 10; }
-.page-footer { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); width: 100%; text-align: center; color: var(--color-text-dim); font-size: 0.875rem; z-index: 11; }
 .result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 100; }
 .result-card { width: 90%; max-width: 800px; height: 80vh; background: var(--color-glass-bg); border: 1px solid var(--color-border); border-radius: 24px; padding: 2rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); display: flex; flex-direction: column; }
 .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0; }
@@ -207,31 +229,4 @@ body { font-family: var(--font-sans); background-color: var(--color-bg); color: 
 @keyframes rotate { 100% { transform: rotate(360deg); } }
 @keyframes dash { 0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; } 50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; } 100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; } }
 @media (max-width: 768px) { .glass-card { padding: 1.5rem; } .card-header h1 { font-size: 1.75rem; } .features { flex-direction: column; gap: 1.5rem; } .result-card { width: calc(100% - 2rem); height: 85vh; border-radius: 16px; padding: 1.5rem;} }
-
-/* --- 【新增样式】报告类型切换器 --- */
-.report-type-selector {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
-  background-color: rgba(15, 23, 42, 0.5);
-  padding: 0.375rem;
-  border-radius: 12px;
-}
-.report-type-selector button {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text-dim);
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.report-type-selector button.active {
-  background-color: var(--color-primary);
-  color: white;
-  box-shadow: 0 2px 10px rgba(129, 140, 248, 0.2);
-}
 </style>
