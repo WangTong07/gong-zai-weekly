@@ -1,5 +1,5 @@
 <script setup>
-// JavaScript部分完全没有变化
+// JavaScript逻辑部分与之前完全相同，未做任何改动
 import { ref, computed } from 'vue';
 
 const userInput = ref('');
@@ -44,7 +44,8 @@ async function generateReport() {
     reportResult.value = data.choices[0].message.content;
     isResultVisible.value = true;
 
-  } catch (error) {
+  } catch (error)
+ {
     console.error("请求AI API失败:", error);
     alert(`生成报告时遇到问题: ${error.message}`);
   } finally {
@@ -61,6 +62,7 @@ async function generateReport() {
       <div class="aurora-shape shape-3"></div>
     </div>
 
+    <!-- 容器的HTML结构不变，魔法全在CSS里 -->
     <div class="content-container">
       <main class="glass-card">
         
@@ -124,7 +126,6 @@ async function generateReport() {
 </template>
 
 <style>
-/* --- 全局与CSS变量 --- */
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --color-text: #e2e8f0;
@@ -144,7 +145,7 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   margin: 0;
-  overflow: hidden; /* 防止页面滚动 */
+  overflow: hidden;
 }
 
 .page-wrapper {
@@ -175,16 +176,18 @@ body {
   to { transform: translate(100px, 50px) rotate(60deg); }
 }
 
+/* --- 【终极布局解决方案】 --- */
 .content-container {
   position: relative;
   z-index: 10;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   padding: 1rem;
+  overflow-y: auto; /* 允许内容容器自身滚动，而不是整个body */
+  
+  /* 使用Grid布局实现完美居中 */
+  display: grid;
+  place-items: center;
 }
 
 .glass-card {
@@ -197,70 +200,32 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  margin-bottom: 3rem; /* 为页脚留出空间 */
 }
 
 .page-footer {
   position: absolute;
   bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   text-align: center;
   color: var(--color-text-dim);
   font-size: 0.875rem;
+  z-index: 11; /* 确保在内容之上 */
 }
 
-.result-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background-color: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-}
-.result-card {
-  width: 90%;
-  max-width: 800px;
-  height: 80vh;
-  background: var(--color-glass-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  display: flex;
-  flex-direction: column;
-}
-
-.result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-}
+/* ... 其他所有样式保持不变 ... */
+.result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 100; }
+.result-card { width: 90%; max-width: 800px; height: 80vh; background: var(--color-glass-bg); border: 1px solid var(--color-border); border-radius: 24px; padding: 2rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); display: flex; flex-direction: column; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0; }
 .result-header h3 { margin: 0; font-size: 1.5rem; }
 .close-btn { background: none; border: none; font-size: 2.5rem; color: var(--color-text-dim); cursor: pointer; transition: color 0.3s ease; line-height: 1; padding: 0; }
 .close-btn:hover { color: var(--color-text); }
-
-.result-content {
-  flex-grow: 1;
-  overflow-y: auto;
-  background: rgba(15, 23, 42, 0.7);
-  border-radius: 8px;
-  padding: 1.5rem;
-}
-.result-content pre {
-  white-space: pre-wrap; word-wrap: break-word;
-  font-family: var(--font-sans); font-size: 1rem; line-height: 1.8;
-  margin: 0; color: #cbd5e1;
-}
-
+.result-content { flex-grow: 1; overflow-y: auto; background: rgba(15, 23, 42, 0.7); border-radius: 8px; padding: 1.5rem; }
+.result-content pre { white-space: pre-wrap; word-wrap: break-word; font-family: var(--font-sans); font-size: 1rem; line-height: 1.8; margin: 0; color: #cbd5e1; }
 .slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 .slide-fade-enter-from, .slide-fade-leave-to { opacity: 0; transform: scale(0.95) translateY(20px); }
-
-/* ... 其他卡片内部样式不变 ... */
 .card-header { text-align: center; margin-bottom: 1.5rem; }
 .logo { display: inline-block; background: linear-gradient(135deg, var(--color-aurora-1), var(--color-aurora-2)); color: white; width: 48px; height: 48px; border-radius: 12px; font-weight: 700; font-size: 1.5rem; line-height: 48px; margin-bottom: 1rem; }
 .card-header h1 { font-size: 2rem; margin: 0; }
@@ -282,5 +247,5 @@ body {
 .path { stroke: white; stroke-linecap: round; animation: dash 1.5s ease-in-out infinite; }
 @keyframes rotate { 100% { transform: rotate(360deg); } }
 @keyframes dash { 0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; } 50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; } 100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; } }
-@media (max-width: 768px) { .content-container { padding: 1rem; } .glass-card { padding: 1.5rem; } .card-header h1 { font-size: 1.75rem; } .features { flex-direction: column; gap: 1.5rem; } .result-card { width: 100%; height: 90vh; border-radius: 16px; padding: 1.5rem;} }
+@media (max-width: 768px) { .content-container { padding: 1rem; } .glass-card { padding: 1.5rem; margin-bottom: 4rem; } .card-header h1 { font-size: 1.75rem; } .features { flex-direction: column; gap: 1.5rem; } .result-card { width: 100%; height: 90vh; border-radius: 16px; padding: 1.5rem;} }
 </style>
