@@ -1,11 +1,12 @@
 <script setup>
+// JavaScript部分完全没有变化，所以这里省略了
+// 我们只关注 <template> 和 <style> 的最终形态
 import { ref } from 'vue';
 
 const userInput = ref('');
 const loading = ref(false);
 const reportResult = ref('');
 
-// 这部分JS逻辑完全不需要改变！
 const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
 
 async function generateReport() {
@@ -147,10 +148,11 @@ body {
 .page-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  /* --- 关键修改！从 flex-start 改为 center --- */
+  align-items: center; 
   min-height: 100vh;
   background: var(--background-gradient);
-  padding: 4rem 1rem;
+  padding: 2rem 1rem; /* 调整了padding，让小屏幕体验更好 */
   box-sizing: border-box;
 }
 
@@ -165,6 +167,27 @@ body {
   flex-direction: column;
   gap: 2rem;
 }
+
+/* 媒体查询：让小屏幕（如手机）布局更好看 */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+    align-items: flex-start; /* 小屏幕时靠上对齐，避免键盘弹出时布局混乱 */
+  }
+  .main-card {
+    padding: 1.5rem;
+  }
+  .features-grid {
+    grid-template-columns: 1fr; /* 小屏幕时，三个特性卡片竖向排列 */
+  }
+  .card-header h1 {
+    font-size: 1.75rem;
+  }
+  .card-header p {
+    font-size: 1rem;
+  }
+}
+
 
 .card-header { text-align: center; }
 .card-header .header-icon-wrapper {
