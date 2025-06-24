@@ -1,11 +1,12 @@
 <script setup>
-// JavaScript部分完全没有变化，未做任何改动
+// JavaScript逻辑部分与之前完全相同，未做任何改动
 import { ref, computed } from 'vue';
 
 const userInput = ref('');
 const loading = ref(false);
 const reportResult = ref('');
 const isResultVisible = ref(false);
+const reportType = ref('weekly');
 
 const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
 
@@ -57,8 +58,6 @@ async function generateReport() {
     loading.value = false;
   }
 }
-// 【新增】由于JS部分也需要用到reportType，需要在这里定义
-const reportType = ref('weekly');
 </script>
 
 <template>
@@ -69,11 +68,8 @@ const reportType = ref('weekly');
       <div class="aurora-shape shape-3"></div>
     </div>
 
-    <!-- 【关键修改】在content-container内部再增加一个容器 -->
     <div class="content-container">
-      <div class="main-content-area">
         <main class="glass-card">
-          <!-- ... 卡片内部HTML结构不变 ... -->
           <header class="card-header">
             <div class="logo">AI</div>
             <h1>AI 智能报告神器</h1>
@@ -108,22 +104,30 @@ const reportType = ref('weekly');
             </span>
           </button>
         </main>
-        
-        <footer class="page-footer">
-          <p>由 <a href="https://github.com/WangTong07" target="_blank">WangTong07</a> 基于大语言模型匠心打造</p>
-        </footer>
-      </div>
     </div>
+    
+    <footer class="page-footer">
+      <p>由 <a href="https://github.com/WangTong07" target="_blank">WangTong07</a> 基于大语言模型匠心打造</p>
+    </footer>
     
     <transition name="slide-fade">
       <div v-if="isResultVisible" class="result-overlay">
-        <!-- ... 结果弹出层不变 ... -->
+          <div class="result-card">
+              <div class="result-header">
+                  <h3>生成结果</h3>
+                  <button @click="isResultVisible=false" class="close-btn">×</button>
+              </div>
+              <div class="result-content">
+                  <pre>{{ reportResult }}</pre>
+              </div>
+          </div>
       </div>
     </transition>
   </div>
 </template>
 
 <style>
+/* --- CSS变量与全局设置 --- */
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --color-text: #e2e8f0;
@@ -136,36 +140,37 @@ const reportType = ref('weekly');
   --color-aurora-2: #4f46e5;
   --color-aurora-3: #db2777;
 }
+
 *, *::before, *::after { box-sizing: border-box; }
-body { font-family: var(--font-sans); background-color: var(--color-bg); color: var(--color-text); margin: 0; overflow: hidden; }
+body { font-family: var(--font-sans); background-color: var(--color-bg); color: var(--color-text); margin: 0; }
 
-.page-wrapper { position: relative; width: 100vw; height: 100vh; }
-.aurora-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; }
-/* ... 极光动画样式不变 ... */
-
-/* --- 【最终布局方案】 --- */
-.content-container {
+/* --- 【磐石之心 V4 布局】 --- */
+.page-wrapper {
   position: relative;
-  z-index: 10;
-  width: 100%;
-  height: 100%;
-  padding: 1rem;
-  overflow-y: auto;
-  display: flex; /* 使用flex布局 */
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto; /* 允许整个页面滚动 */
 }
 
-.main-content-area {
+.aurora-background {
+  position: fixed; /* 背景固定，不随滚动条滚动 */
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden; z-index: -1;
+}
+
+.content-container {
   width: 100%;
-  max-width: 680px;
+  min-height: 100%; /* 确保容器至少和屏幕一样高 */
   display: flex;
-  flex-direction: column;
-  gap: 1rem; /* 卡片和页脚之间的间距 */
+  justify-content: center;
+  align-items: center; /* 垂直居中 */
+  padding: 4rem 1rem; /* 上下留出足够空间 */
 }
 
 .glass-card {
   width: 100%;
+  max-width: 680px;
   background: var(--color-glass-bg);
   border: 1px solid var(--color-border);
   border-radius: 24px;
@@ -173,29 +178,62 @@ body { font-family: var(--font-sans); background-color: var(--color-bg); color: 
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  
-  /* 【微压缩】通过flex gap调整内部间距 */
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; 
+  gap: 1.75rem; /* 调整内部间距 */
 }
 
 .page-footer {
+  position: fixed; /* 页脚固定在屏幕底部 */
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   text-align: center;
   color: var(--color-text-dim);
   font-size: 0.875rem;
+  z-index: 20;
 }
 
-/* --- 移除之前对卡片和页脚的绝对定位，交由flex管理 --- */
-
-/* 【微压缩】调整或移除之前单独设置的margin-bottom */
-.card-header { text-align: center; /* 移除 margin-bottom */ }
-.report-type-selector { /* 移除 margin-bottom */ }
-.features { /* 移除 margin-bottom */ }
-.input-container { /* 无需改动 */ }
-.action-button { margin-top: 0; /* 移除 margin-top */ }
-
 /* ... 其他所有样式保持不变 ... */
-/* ... (此处省略大量未改变的样式代码以保持简洁) ... */
+.aurora-shape { position: absolute; filter: blur(120px); opacity: 0.3; border-radius: 50%; animation: move 20s infinite alternate; }
+.shape-1 { width: 500px; height: 500px; background-color: var(--color-aurora-1); top: -20%; left: -20%; }
+.shape-2 { width: 400px; height: 400px; background-color: var(--color-aurora-2); top: 30%; right: -10%; animation-delay: 5s; }
+.shape-3 { width: 450px; height: 450px; background-color: var(--color-aurora-3); bottom: -25%; left: 10%; animation-delay: 10s; }
+@keyframes move { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(100px, 50px) rotate(60deg); } }
+.result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 100; }
+.result-card { width: 90%; max-width: 800px; height: 80vh; background: var(--color-glass-bg); border: 1px solid var(--color-border); border-radius: 24px; padding: 2rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); display: flex; flex-direction: column; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0; }
+.result-header h3 { margin: 0; font-size: 1.5rem; }
+.close-btn { background: none; border: none; font-size: 2.5rem; color: var(--color-text-dim); cursor: pointer; transition: color 0.3s ease; line-height: 1; padding: 0; }
+.close-btn:hover { color: var(--color-text); }
+.result-content { flex-grow: 1; overflow-y: auto; background: rgba(15, 23, 42, 0.7); border-radius: 8px; padding: 1.5rem; }
+.result-content pre { white-space: pre-wrap; word-wrap: break-word; font-family: var(--font-sans); font-size: 1rem; line-height: 1.8; margin: 0; color: #cbd5e1; }
+.slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.slide-fade-enter-from, .slide-fade-leave-to { opacity: 0; transform: scale(0.95) translateY(20px); }
+.card-header { text-align: center; }
+.logo { display: inline-block; background: linear-gradient(135deg, var(--color-aurora-1), var(--color-aurora-2)); color: white; width: 48px; height: 48px; border-radius: 12px; font-weight: 700; font-size: 1.5rem; line-height: 48px; margin-bottom: 1rem; }
+.card-header h1 { font-size: 2rem; margin: 0; }
+.card-header p { color: var(--color-text-dim); margin: 0.5rem 0 0; }
+.report-type-selector { display: flex; justify-content: center; background-color: rgba(15, 23, 42, 0.5); padding: 0.375rem; border-radius: 12px; }
+.report-type-selector button { flex: 1; padding: 0.75rem 1rem; border: none; background-color: transparent; color: var(--color-text-dim); font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+.report-type-selector button.active { background-color: var(--color-primary); color: white; box-shadow: 0 2px 10px rgba(129, 140, 248, 0.2); }
+.features { display: flex; justify-content: space-around; background-color: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 16px; }
+.feature-item { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--color-text-dim); transition: color 0.3s ease; }
+.feature-item:hover { color: var(--color-text); }
+.feature-item svg { width: 24px; height: 24px; }
+.feature-item span { font-size: 0.875rem; font-weight: 500; }
+.input-container textarea { width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--color-border); border-radius: 12px; padding: 1rem; color: var(--color-text); font-size: 1rem; line-height: 1.6; resize: none; transition: all 0.3s ease; }
+.input-container textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.3); }
+.action-button { width: 100%; padding: 1rem; border: none; border-radius: 12px; background: linear-gradient(90deg, var(--color-primary), var(--color-aurora-2)); color: white; font-size: 1.125rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(129, 140, 248, 0.2); }
+.action-button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 7px 20px rgba(129, 140, 248, 0.3); }
+.action-button:disabled { background: #334155; cursor: not-allowed; box-shadow: none; }
+.loading-state { display: flex; align-items: center; justify-content: center; gap: 0.75rem; }
+.page-footer a { color: var(--color-primary); text-decoration: none; font-weight: 500; transition: color 0.3s ease; }
+.page-footer a:hover { color: white; }
+.spinner { animation: rotate 2s linear infinite; width: 20px; height: 20px; }
+.path { stroke: white; stroke-linecap: round; animation: dash 1.5s ease-in-out infinite; }
+@keyframes rotate { 100% { transform: rotate(360deg); } }
+@keyframes dash { 0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; } 50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; } 100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; } }
+@media (max-width: 768px) { .content-container { padding: 1rem; } .glass-card { padding: 1.5rem; } .card-header h1 { font-size: 1.75rem; } .features { flex-direction: column; gap: 1.5rem; } .result-card { width: calc(100% - 2rem); height: 85vh; border-radius: 16px; padding: 1.5rem;} }
 </style>
