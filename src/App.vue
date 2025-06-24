@@ -1,13 +1,18 @@
 <script setup>
-// JavaScript部分完全没有变化，所以这里省略了
-// 我们只关注 <template> 和 <style> 的最终形态
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const userInput = ref('');
 const loading = ref(false);
 const reportResult = ref('');
+const isResultVisible = ref(false);
 
 const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
+
+// 计算textarea的行数以实现自适应高度
+const textareaRows = computed(() => {
+  const newlines = (userInput.value.match(/\n/g) || []).length;
+  return Math.max(8, newlines + 1);
+});
 
 async function generateReport() {
   if (!userInput.value.trim()) {
@@ -16,17 +21,14 @@ async function generateReport() {
   }
   
   loading.value = true;
-  reportResult.value = '';
+  isResultVisible.value = false; // 先隐藏旧结果
 
-  const prompt = `你是一名资深项目经理，请将以下我的本周工作记录，整理成一份专业、正式、向上汇报的周报。请分点阐述，并适当润色，突出工作亮点和价值。周报需要包含以下几个部分：1. 本周重点工作总结 2. 主要成果与数据 3. 下周工作计划。我的工作记录是：『${userInput.value}』`;
+  const prompt = `你是一名资深项目经理和语言专家，请将以下我的本周工作记录，整理成一份专业、正式、结构清晰、语言精炼且富有洞见的周报。周报需要包含以下几个部分：【本周核心工作概览】、【主要成果与数据支撑】、【遇到的挑战与解决方案】、【个人成长与反思】、【下周重点计划】。请确保语言风格专业、积极，并能突出个人贡献和价值。我的工作记录是：『${userInput.value}』`;
 
   try {
     const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: "glm-3-turbo",
         messages: [{ role: "user", content: prompt }]
@@ -35,19 +37,16 @@ async function generateReport() {
 
     if (!response.ok) {
         const errorBody = await response.json();
-        console.error("API 错误响应:", errorBody);
-        alert(`请求失败: ${errorBody.error?.message || response.statusText}`);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(errorBody.error?.message || `HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
     reportResult.value = data.choices[0].message.content;
+    isResultVisible.value = true; // 获取到新结果后再显示
 
   } catch (error) {
     console.error("请求AI API失败:", error);
-    if (!alert.toString().includes('请求失败')) {
-        alert('生成报告时遇到问题，请稍后再试或查看控制台获取详情。');
-    }
+    alert(`生成报告时遇到问题: ${error.message}`);
   } finally {
     loading.value = false;
   }
@@ -55,267 +54,298 @@ async function generateReport() {
 </script>
 
 <template>
-  <div class="page-container">
-    <main class="main-card">
+  <div class="aurora-background">
+    <div class="aurora-shape shape-1"></div>
+    <div class="aurora-shape shape-2"></div>
+    <div class="aurora-shape shape-3"></div>
+
+    <main class="glass-card" :class="{ 'result-visible': isResultVisible }">
       
       <header class="card-header">
-        <div class="header-icon-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20V16"/></svg>
-        </div>
-        <h1>周报生成器 Pro</h1>
-        <p>高效工作，优雅汇报。让AI成为你的职场助理。</p>
+        <div class="logo">AI</div>
+        <h1>AI 智能周报神器</h1>
+        <p>输入你的流水账，收获一份惊艳上级的专业报告</p>
       </header>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2z"></polygon></svg>
-          </div>
-          <h3>智能生成</h3>
-          <p>AI自动整理工作内容</p>
+      <section class="features">
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span>深度理解</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          </div>
-          <h3>专业格式</h3>
-          <p>规范化周报模板</p>
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <span>专业写作</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-          </div>
-          <h3>一键美化</h3>
-          <p>专业排版，即用即得</p>
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9 9l-7 3 7 3 2 7 2-7 7-3-7-3z"></path></svg>
+          <span>一键排版</span>
         </div>
-      </div>
+      </section>
 
-      <div class="input-area">
-        <label for="work-content">请输入本周的工作内容:</label>
+      <section class="input-container">
         <textarea
-          id="work-content"
           v-model="userInput"
-          rows="10"
-          placeholder="在这里输入本周的工作流水账，越详细越好...
-例如：
- - 周一：与产品经理开会，敲定了V2.1版本需求；
- - 周二：修复了用户反馈的3个UI错位bug；
- - 周三：完成了新功能“数据导出”的后端接口开发；"
+          :rows="textareaRows"
+          placeholder="请粘贴或输入本周的工作记录..."
         ></textarea>
-      </div>
+      </section>
 
-      <button @click="generateReport" :disabled="loading" class="submit-button">
-        <span v-if="!loading" class="button-content">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9 9l-7 3 7 3 2 7 2-7 7-3-7-3z"></path></svg>
-          一键生成专业周报
-        </span>
-        <span v-else class="loading-content">
-          <svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
-          AI思考中...
+      <button @click="generateReport" :disabled="loading" class="action-button">
+        <span v-if="!loading">生成我的专属周报</span>
+        <span v-else class="loading-state">
+          <svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle></svg>
+          正在为您创作...
         </span>
       </button>
 
-      <transition name="fade">
-        <div v-if="reportResult" class="result-area">
-          <pre>{{ reportResult }}</pre>
-        </div>
+      <transition name="slide-fade">
+        <section v-if="isResultVisible" class="result-container">
+          <div class="result-header">
+            <h3>生成结果</h3>
+            <button @click="isResultVisible=false" class="close-btn">×</button>
+          </div>
+          <div class="result-content">
+            <pre>{{ reportResult }}</pre>
+          </div>
+        </section>
       </transition>
 
     </main>
+    <footer class="page-footer">
+      <p>由 <a href="https://github.com/WangTong07" target="_blank">WangTong07</a> 基于大语言模型匠心打造</p>
+    </footer>
   </div>
 </template>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+/* --- 全局与CSS变量 --- */
 :root {
-  --primary-color-start: #6d28d9;
-  --primary-color-end: #4f46e5;
-  --background-gradient: linear-gradient(135deg, #f3e8ff 0%, #e0e7ff 100%);
-  --card-bg: #ffffff;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --feature-card-bg: #f9fafb;
-  --border-color: #e5e7eb;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --color-text: #e2e8f0;
+  --color-text-dim: #94a3b8;
+  --color-bg: #0f172a;
+  --color-glass-bg: rgba(30, 41, 59, 0.6);
+  --color-border: rgba(148, 163, 184, 0.2);
+  --color-primary: #818cf8;
+  --color-aurora-1: #7c3aed;
+  --color-aurora-2: #4f46e5;
+  --color-aurora-3: #db2777;
 }
 
+/* --- 基础与背景 --- */
+*, *::before, *::after { box-sizing: border-box; }
 body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  color: var(--text-primary);
 }
-
-.page-container {
-  display: flex;
-  justify-content: center;
-  /* --- 关键修改！从 flex-start 改为 center --- */
-  align-items: center; 
+.aurora-background {
+  position: relative;
   min-height: 100vh;
-  background: var(--background-gradient);
-  padding: 2rem 1rem; /* 调整了padding，让小屏幕体验更好 */
-  box-sizing: border-box;
-}
-
-.main-card {
   width: 100%;
-  max-width: 720px;
-  background: var(--card-bg);
-  border-radius: 24px;
-  padding: 2.5rem 3rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-}
-
-/* 媒体查询：让小屏幕（如手机）布局更好看 */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem;
-    align-items: flex-start; /* 小屏幕时靠上对齐，避免键盘弹出时布局混乱 */
-  }
-  .main-card {
-    padding: 1.5rem;
-  }
-  .features-grid {
-    grid-template-columns: 1fr; /* 小屏幕时，三个特性卡片竖向排列 */
-  }
-  .card-header h1 {
-    font-size: 1.75rem;
-  }
-  .card-header p {
-    font-size: 1rem;
-  }
-}
-
-
-.card-header { text-align: center; }
-.card-header .header-icon-wrapper {
-  display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary-color-start), var(--primary-color-end));
-  color: white;
-  margin-bottom: 1rem;
+  padding: 2rem 1rem;
+  overflow: hidden;
 }
-.card-header h1 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin: 0;
+.aurora-shape {
+  position: absolute;
+  filter: blur(100px);
+  opacity: 0.4;
+  border-radius: 50%;
+  animation: move 20s infinite alternate;
 }
-.card-header p {
-  font-size: 1.125rem;
-  color: var(--text-secondary);
-  margin: 0.5rem 0 0;
+.shape-1 {
+  width: 400px; height: 400px;
+  background-color: var(--color-aurora-1);
+  top: -10%; left: -10%;
 }
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+.shape-2 {
+  width: 300px; height: 300px;
+  background-color: var(--color-aurora-2);
+  top: 20%; right: 0;
+  animation-delay: 5s;
 }
-
-.feature-card {
-  background: var(--feature-card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
+.shape-3 {
+  width: 350px; height: 350px;
+  background-color: var(--color-aurora-3);
+  bottom: -15%; left: 20%;
+  animation-delay: 10s;
 }
-.feature-card .feature-icon {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background-color: #eef2ff;
-  color: var(--primary-color-end);
-  margin-bottom: 1rem;
-}
-.feature-card h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-}
-.feature-card p {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0.25rem 0 0;
+@keyframes move {
+  from { transform: translate(0, 0) rotate(0deg); }
+  to { transform: translate(100px, 50px) rotate(60deg); }
 }
 
-.input-area label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-.input-area textarea {
+/* --- 主卡片 --- */
+.glass-card {
   width: 100%;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
+  max-width: 680px;
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 2.5rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  position: relative;
+  z-index: 10;
+  transition: all 0.5s ease;
+}
+.glass-card.result-visible {
+  margin-bottom: 20rem; /* 为结果区腾出空间 */
+}
+
+/* --- 卡片头部 --- */
+.card-header { text-align: center; margin-bottom: 1.5rem; }
+.logo {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--color-aurora-1), var(--color-aurora-2));
+  color: white;
+  width: 48px; height: 48px;
   border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 48px;
+  margin-bottom: 1rem;
+}
+.card-header h1 { font-size: 2rem; margin: 0; }
+.card-header p { color: var(--color-text-dim); margin: 0.5rem 0 0; }
+
+/* --- 特性区域 --- */
+.features {
+  display: flex;
+  justify-content: space-around;
+  background-color: rgba(15, 23, 42, 0.5);
+  padding: 1rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+}
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-dim);
+  transition: color 0.3s ease;
+}
+.feature-item:hover { color: var(--color-text); }
+.feature-item svg { width: 24px; height: 24px; }
+.feature-item span { font-size: 0.875rem; font-weight: 500; }
+
+/* --- 输入区域 --- */
+.input-container textarea {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+  color: var(--color-text);
   font-size: 1rem;
   line-height: 1.6;
-  box-sizing: border-box;
-  resize: vertical;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: none;
+  transition: all 0.3s ease;
 }
-.input-area textarea:focus {
+.input-container textarea:focus {
   outline: none;
-  border-color: var(--primary-color-end);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.3);
 }
 
-.submit-button {
+/* --- 按钮 --- */
+.action-button {
   width: 100%;
   padding: 1rem;
+  margin-top: 1.5rem;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary-color-start), var(--primary-color-end));
+  background: linear-gradient(90deg, var(--color-primary), var(--color-aurora-2));
   color: white;
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(109, 40, 217, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(129, 140, 248, 0.2);
 }
-.submit-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 7px 10px rgba(109, 40, 217, 0.25);
+.action-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 20px rgba(129, 140, 248, 0.3);
 }
-.submit-button:disabled {
-  background: #9ca3af;
+.action-button:disabled {
+  background: #334155;
   cursor: not-allowed;
   box-shadow: none;
 }
-.submit-button .button-content, .submit-button .loading-content {
+.loading-state {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
 }
 
-.result-area {
-  margin-top: 1rem;
-  background: #f9fafb;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
+/* --- 结果区域 --- */
+.result-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(100%);
+  background: var(--color-glass-bg);
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 24px 24px;
+  padding: 1.5rem 2.5rem 2.5rem;
 }
-.result-area pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  line-height: 1.7;
-  margin: 0;
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.result-header h3 { margin: 0; font-size: 1.25rem; }
+.close-btn {
+  background: none; border: none; font-size: 2rem;
+  color: var(--color-text-dim); cursor: pointer; transition: color 0.3s ease;
+}
+.close-btn:hover { color: var(--color-text); }
+.result-content {
+  max-height: 40vh;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.result-content pre {
+  white-space: pre-wrap; word-wrap: break-word;
+  font-family: var(--font-sans); font-size: 0.95rem; line-height: 1.8;
+  margin: 0; color: #cbd5e1;
 }
 
-.spinner { animation: rotate 2s linear infinite; width: 24px; height: 24px; }
-.path { stroke: rgba(255, 255, 255, 0.9); stroke-linecap: round; animation: dash 1.5s ease-in-out infinite; }
+/* --- 动画与过渡 --- */
+.slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.slide-fade-enter-from, .slide-fade-leave-to { opacity: 0; transform: translateY(80%); }
+
+/* --- 页脚 --- */
+.page-footer {
+  position: absolute;
+  bottom: 1rem;
+  color: var(--color-text-dim);
+  font-size: 0.875rem;
+  z-index: 5;
+}
+.page-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+.page-footer a:hover { color: white; }
+
+/* --- 动画 --- */
+.spinner { animation: rotate 2s linear infinite; width: 20px; height: 20px; }
+.path { stroke: white; stroke-linecap: round; animation: dash 1.5s ease-in-out infinite; }
 @keyframes rotate { 100% { transform: rotate(360deg); } }
 @keyframes dash {
   0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
@@ -323,6 +353,11 @@ body {
   100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
 }
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+/* --- 响应式 --- */
+@media (max-width: 768px) {
+  .aurora-background { padding: 1rem; }
+  .glass-card { padding: 1.5rem; }
+  .card-header h1 { font-size: 1.75rem; }
+  .glass-card.result-visible { margin-bottom: 50vh; }
+}
 </style>
